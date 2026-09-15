@@ -1,29 +1,27 @@
 const sampleOrderData = {
-    orderId: 'ORD-9821',
-    customer: 'Олена Петренко',
-    initialItems: [
-        { id: 1, title: 'Механічна клавіатура', price: 3200, category: 'electronics' },
-        { id: 2, title: 'Бездротова миша', price: 1100, category: 'electronics' },
-    ],
+  orderId: 'ORD-9821',
+  customer: 'Олена Петренко',
+  initialItems: [
+    { id: 1, title: 'Механічна клавіатура', price: 3200, category: 'electronics' },
+    { id: 2, title: 'Бездротова миша', price: 1100, category: 'electronics' },
+  ],
 }
 
-
 class Product {
-
-  static #count = 1;
+  static #count = 1
   static taxRate = 0.05
 
-  #id;
+  #id
   #price
 
   constructor(title, price, category) {
-    this.#id = `prod_${Product.#count++}`;
+    this.#id = `prod_${Product.#count++}`
     this.title = title
-    this.price = price
+    this.price = price 
     this.category = category
   }
 
-  get id(){
+  get id() {
     return this.#id
   }
 
@@ -32,16 +30,13 @@ class Product {
   }
 
   set price(amount) {
-    if (typeof amount !== 'number' || Number.isNaN(amount)) {
-      throw new Error('It is not a number')
-    }
-    if (amount <= 0) {
-      throw new Error('Cannot be less number')
+    if (typeof amount !== 'number' || Number.isNaN(amount) || amount <= 0) {
+      throw new Error('It needs to be a number')
     }
     this.#price = amount
   }
 
-  static formatPrice(amount, currency = 'UAH') {
+  static formatPrice(amount, currency = 'uah') {
     return `${amount.toFixed(2)} ${currency}`
   }
 
@@ -50,176 +45,153 @@ class Product {
   }
 
   getInfo() {
-    return `ID ${this.id} ${this.title} (${this.category}) ${this.price} UAH`
+    return `[ID: ${this.id}] ${this.title} (${this.category}) — ${this.price} UAH`
   }
 }
 
-const keyboard = new Product('Механічна клавіатура', 3200, 'electronics')
-
-// console.log(keyboard.id) 
-// console.log(keyboard.price) 
-// console.log(keyboard.getInfo()) 
-// console.log(Product.formatPrice(keyboard.calculateTotalWithTax()))
-
 class ElectronicsProduct extends Product {
+  _warrantyMonths
 
-  #warrantyMonths;
-
-  constructor(title,price, warrantyMonths, powerConsumption){
-    super(title,price,'electronics');
-    this.#warrantyMonths = warrantyMonths;
-    this.powerConsumption = powerConsumption;
+  constructor(title, price, warrantyMonths, powerConsumption) {
+    super(title, price, 'electronics')
+    this._warrantyMonths = warrantyMonths
+    this.powerConsumption = powerConsumption
   }
 
   getInfo() {
-    return `${super.getInfo()} | warranty: ${this.#warrantyMonths} months and Capacity: ${this.powerConsumption} V`
+    return `${super.getInfo()} | Гарантія: ${this._warrantyMonths} міс., Capacity: ${this.powerConsumption} Вт`
   }
 }
 
 class PerishableProduct extends Product {
+  #expirationDate
 
-  #expirationDate;
-
-  constructor (title,price, category, expirationDate) {
-    super(title,price, category);
-    this.#expirationDate = expirationDate;
+  constructor(title, price, category, expirationDate) {
+    super(title, price, category)
+    this.#expirationDate = expirationDate
   }
 
   isExpired() {
-    return this.#expirationDate < new Date();
+    return this.#expirationDate < new Date()
   }
+
   getInfo() {
-    return `${super.getInfo()}.Need to be used until  ${this.#expirationDate.toISOString().split('T')[0]}`
+    const formattedDate = this.#expirationDate.toISOString().split('T')[0]
+    return `${super.getInfo()} | Appropriatte to: ${formattedDate}`
   }
 }
 
-const tv = new ElectronicsProduct('Smart TV 55"', 18000, 24, 120)
-// console.log(tv.getInfo())
-
-const milk = new PerishableProduct('Органічне молоко', 45, 'dairy', new Date('2026-10-01'))
-// console.log(milk.isExpired()) 
-// console.log(milk.getInfo())
-
 class User {
-
   #passwordHash
 
-  constructor (name,email, role = 'customer'){
-    this.name = name;
-    this.email = email;
-    this.role = role;
+  constructor(name, email, role = 'customer') {
+    this.name = name
+    this.email = email
+    this.role = role
   }
 
   setPassword(newPassword) {
-    if(newPassword.length >= 6){
-      this.#passwordHash = `_${newPassword}_`
-    }else{
-      throw new Error("Password need to be at least 6 symbols")
+    if (newPassword.length < 6) {
+      throw new Error('More than 6 symbols')
     }
+    this.#passwordHash = `hash_${newPassword}`
   }
-  checkPassword(password){
-    return this.#passwordHash == `_${password}_`
+
+  checkPassword(password) {
+    return this.#passwordHash === `hash_${password}`
   }
+
   getRole() {
-    return this.role;
+    return this.role
   }
 }
 
 class AdminUser extends User {
-
   static #secretMasterKey = 'master_admin_2026'
 
-  constructor (name,email,adminKey) {
-    if(adminKey == AdminUser.#secretMasterKey){
-      super(name,email,"admin");
-      this.permissions = ['all'];
-    }else{
-      throw new Error("You cunt go:not correct key")
+  constructor(name, email, adminKey) {
+    if (adminKey !== AdminUser.#secretMasterKey) {
+      throw new Error('Not correct key of admin')
     }
+    super(name, email, 'admin')
+    this.permissions = ['all']
   }
 
-  static createSuperAdmin (name,email) {
-    return new this(name,email,AdminUser.#secretMasterKey);
+  static createSuperAdmin(name, email) {
+    return new AdminUser(name, email, AdminUser.#secretMasterKey)
   }
 }
-
-const admin = AdminUser.createSuperAdmin('Тарас', 'taras@store.ua')
-// console.log(admin.getRole())
-// console.log(admin.permissions) 
 
 class ShoppingCart {
-  #items = [];
-  static #totalOrdersCreated = 0;
+  #items = []
+  static #totalOrdersCreated = 0
 
-  static get totalOrders(){
-    return ShoppingCart.#totalOrdersCreated;
+  static get totalOrders() {
+    return ShoppingCart.#totalOrdersCreated
   }
-  addItem(product, quantity = 1){
-    if(product instanceof Product){
-      let isFound = false;
-      for(let item of this.#items){
-        if(item.product == product){
-          isFound = true;
-          item.quantity++
-        }
-      }
-      if(!isFound){
-        this.#items.push({
-          product : product,
-          quantity : quantity,
-        })
-      }
+
+  addItem(product, quantity = 1) {
+    if (!(product instanceof Product)) {
+      throw new Error('Object is not a valid product')
+    }
+
+    const existingItem = this.#items.find((item) => item.product.id === product.id)
+
+    if (existingItem) {
+      existingItem.quantity += quantity
+    } else {
+      this.#items.push({ product, quantity })
     }
   }
+
   removeItem(productId) {
-    this.#items.filter(obj => obj.product.id !== productId);
+    this.#items = this.#items.filter((item) => item.product.id !== productId)
   }
-  get totalCost(){
-    let total = 0;
-    for(let item of this.#items){
-      let itemCost = item.product.calculateTotalWithTax(item.product.price * item.quantity);
-      total += itemCost
-    }
-    return total;
+
+  get totalCost() {
+    return this.#items.reduce((total, item) => {
+      return total + item.product.calculateTotalWithTax() * item.quantity
+    }, 0)
   }
+
   checkout() {
-    if(this.#items.length == 0) throw new Error("The bucket has no items")
-    ShoppingCart.#totalOrdersCreated++;
-    let number = 1;
-    for(let item of this.#items){
-      console.log(`Item ${number}: ${item.product.title}`)
-      number++
+    if (this.#items.length === 0) {
+      throw new Error('Cart is empty')
     }
-    return `Total cost : ${this.totalCost} Date: ${new Date()}`
+
+    ShoppingCart.#totalOrdersCreated++
+
+    const orderReport = {
+      items: this.#items.map((item) => `${item.product.title} x${item.quantity}`),
+      totalCost: Product.formatPrice(this.totalCost),
+      date: new Date(),
+    }
+
+    this.#items = []
+
+    return orderReport
   }
 }
 
-const cart = new ShoppingCart()
-cart.addItem(keyboard, 2)
-cart.addItem(tv, 1)
+function inspectHierarchy(instance) {
+  const inheritanceChain = []
+  let currentObj = instance
 
-// console.log(cart.totalCost) 
-// const orderReport = cart.checkout()
-// console.log(orderReport)
-// console.log(ShoppingCart.totalOrders) // 1
+  while (currentObj && currentObj.constructor) {
+    inheritanceChain.push(currentObj.constructor.name)
+    currentObj = Object.getPrototypeOf(currentObj)
 
-function inspectHierarchy (instanse) {
-  let current = Object.getPrototypeOf(instanse);
-  let parentBox = [];
-  while(current !== null){
-    parentBox.push(current.constructor?.name)
-    current = Object.getPrototypeOf(current);
+    if (!currentObj || currentObj === Object.prototype) {
+      if (currentObj) inheritanceChain.push(currentObj.constructor.name)
+      break
+    }
   }
-  parentBox.push(null);
+
   return {
-    constructorName : instanse.constructor.name,
-    inheritanceChain : parentBox,
-    isInstanceOf : function (ClassRef) {
-      return (instanse instanceof ClassRef);
-    }
+    constructorName: instance.constructor.name,
+    inheritanceChain: inheritanceChain,
+    isInstanceOf: function (ClassRef) {
+      return instance instanceof ClassRef
+    },
   }
 }
-const report = inspectHierarchy(tv)
-console.log(report.constructorName) 
-console.log(report.inheritanceChain) 
-console.log(report.isInstanceOf(Product)) 
